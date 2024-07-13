@@ -40,8 +40,17 @@ SensorResult RedundantSensor::get() const {
 
 	float sensor2Value = sensor2.Value;
 
-	// Partial redundancy; useful for some sensors: e.g. Ford and Toyota ETCS-i
-	if (m_secondMaximum < 100) {
+	if (m_secondMaximum >= 100) {
+		// Sensor is fully redundant
+
+		float delta = absF(sensor1.Value - sensor2.Value);
+		if (delta <= m_maxDifference) {
+			// All is well: sensors are valid and values check out, return the average value
+			return m_averageSensors ? (sensor1.Value + sensor2Value) / 2 : sensor1.Value;
+		}
+	} else {
+		// Partial redundancy; useful for some sensors: e.g. Ford and Toyota ETCS-i
+
 		// scale the second sensor value accordingly, proportioning to the first sensor
 		sensor2Value *= m_secondMaximum / 100;
 
@@ -57,12 +66,6 @@ SensorResult RedundantSensor::get() const {
 			// There's a discrepancy: first sensor is out of compliance, return inconsistency error
 			return UnexpectedCode::Inconsistent;
 		}
-	}
-
-	float delta = absF(sensor1.Value - sensor2Value);
-	if (delta <= m_maxDifference) {
-		// All is well: sensors are valid and values check out
-		return m_averageSensors ? (sensor1.Value + sensor2Value) / 2 : sensor1.Value;
 	}
 
 	// Any other condition indacates an unexpected discrepancy, return inconsistency error
