@@ -75,7 +75,7 @@
 
 static pedal2tps_t pedal2tpsMap;
 
-constexpr float etbPeriodSeconds = 1.0f / ETB_LOOP_FREQUENCY;
+static constexpr float etbPeriodSeconds = 1.0f / SLOW_ADC_RATE;
 
 static bool startupPositionError = false;
 
@@ -754,23 +754,6 @@ static EtbImpl<EtbController2> etb2;
 static_assert(ETB_COUNT == 2);
 static EtbController* etbControllers[] = { &etb1, &etb2 };
 
-#if !EFI_UNIT_TEST
-
-struct DcThread final : public PeriodicController<512> {
-	DcThread() : PeriodicController("DC", PRIO_ETB, ETB_LOOP_FREQUENCY) {}
-
-	void PeriodicTask(efitick_t) override {
-		// Simply update all controllers
-		for (int i = 0 ; i < ETB_COUNT; i++) {
-			etbControllers[i]->update();
-		}
-	}
-};
-
-static DcThread dcThread CCM_OPTIONAL;
-
-#endif // EFI_UNIT_TEST
-
 void etbPidReset() {
 	for (int i = 0 ; i < ETB_COUNT; i++) {
 		if (auto controller = engine->etbControllers[i]) {
@@ -957,14 +940,6 @@ void doInitElectronicThrottle() {
 		startupPositionError = true;
 	}
 #endif /* EFI_UNIT_TEST */
-
-#if !EFI_UNIT_TEST
-	static bool started = false;
-	if (started == false) {
-		dcThread.start();
-		started = true;
-	}
-#endif
 }
 
 void initElectronicThrottle() {

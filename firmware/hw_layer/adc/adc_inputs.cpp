@@ -32,6 +32,7 @@ float __attribute__((weak)) getAnalogInputDividerCoefficient(adc_channel_e) {
 #include "mpu_util.h"
 #include "periodic_thread_controller.h"
 #include "protected_gpio.h"
+#include "electronic_throttle.h"
 
 /* Depth of the conversion buffer, channels are sampled X times each.*/
 #ifndef ADC_BUF_DEPTH_FAST
@@ -277,7 +278,7 @@ int getSlowAdcCounter() {
 }
 
 
-class SlowAdcController : public PeriodicController<256> {
+class SlowAdcController : public PeriodicController<512> {
 public:
 	SlowAdcController() 
 		: PeriodicController("ADC", PRIO_ADC, SLOW_ADC_RATE)
@@ -304,6 +305,13 @@ public:
 			AdcSubscription::UpdateSubscribers(nowNt);
 
 			protectedGpio_check(nowNt);
+		}
+
+		{
+			// Update throttle control in sync with ADC
+			for (int i = 0; i < ETB_COUNT; i++) {
+				engine->etbControllers[i]->update();
+			}
 		}
 	}
 };

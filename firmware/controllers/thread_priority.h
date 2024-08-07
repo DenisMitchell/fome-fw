@@ -10,7 +10,6 @@
 
 // ADC and ETB get highest priority - not much else actually runs the engine
 #define PRIO_ADC (NORMALPRIO + 10)
-#define PRIO_ETB (NORMALPRIO + 9)
 
 // GPIO chips should be fast and go right back to sleep, plus can be timing sensitive
 #define PRIO_GPIOCHIP (NORMALPRIO + 8)
